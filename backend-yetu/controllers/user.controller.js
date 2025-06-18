@@ -14,21 +14,18 @@ const transporter = nodemailer.createTransport({
 
 // Créer les utilisateurs
 exports.createUserWithRole = async (req, res) => {
-    const { email, password, displayName, role, matricule, phone } = req.body;
+    const { email, password, displayName, role, matricule, phone, villeId } = req.body;
 
     try {
-        const user = await admin.auth().createUser({
-            email,
-            password,
-            displayName,
-            phoneNumber: phone
-        });
-
-        // Attribuer le rôle personnalisé
+        const user = await admin.auth().createUser({ email, password, displayName, phoneNumber: phone });
         await admin.auth().setCustomUserClaims(user.uid, { role });
 
-        // Enregistrer les infos complémentaires dans Firestore
         const db = admin.firestore();
+
+        // 🔥 récupérer la ville
+        const villeSnap = await db.collection("villes").doc(villeId).get();
+        const villeData = villeSnap.exists ? villeSnap.data() : null;
+
         await db.collection("users").doc(user.uid).set({
             uid: user.uid,
             email,
@@ -36,6 +33,11 @@ exports.createUserWithRole = async (req, res) => {
             displayName,
             phone,
             matricule,
+            ville: villeData ? {
+                id: villeId,
+                nom: villeData.nom,
+                zone: villeData.zone
+            } : null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -44,6 +46,7 @@ exports.createUserWithRole = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 // Récupérer les utilisateurs
 exports.getAllUsers = async (req, res) => {

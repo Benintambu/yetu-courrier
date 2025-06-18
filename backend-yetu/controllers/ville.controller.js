@@ -46,3 +46,26 @@ exports.deleteVille = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.searchVilles = async (req, res) => {
+    const { q } = req.query;
+
+    try {
+        const db = require("../config/firebase").firestore();
+
+        const snapshot = await db.collection("villes")
+            .where("nom", ">=", q)
+            .where("nom", "<=", q + "\uf8ff")
+            .limit(10)
+            .get();
+
+        const results = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.status(200).json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

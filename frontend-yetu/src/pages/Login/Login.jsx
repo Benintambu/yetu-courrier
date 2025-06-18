@@ -28,29 +28,26 @@ export default function Login() {
         }
     }
 
-
-
-    //< i class='bxr  bx-eye-slash'  ></i> 
-
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
             const userCred = await signInWithEmailAndPassword(auth, email, password);
-            const token = await userCred.user.getIdTokenResult();
+            const user = userCred.user;
+
+            // Attendre les custom claims
+            const token = await user.getIdTokenResult();
             const role = token.claims.role;
 
             if (role === "admin") navigate("/dashboard");
             else if (role === "gerant") navigate("/gerant");
             else if (role === "chauffeur") navigate("/chauffeur");
             else if (role === "client") navigate("/client");
-            else navigate("/login");
+            else navigate("/login"); // au cas où
         } catch (err) {
-            console.log("Erreur de connexion : " + err.message);
-            setError("Informations invalides");
+            console.error("Erreur de connexion :", err.message);
+            setError("Email ou mot de passe incorrect.");
         }
     };
-
-
 
 
     return (

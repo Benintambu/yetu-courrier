@@ -15,11 +15,11 @@ function App() {
 
   return (
     <Routes>
-      {/* 🔓 Accessible sans être connecté */}
+      {/*  Accessible sans être connecté */}
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/login" element={<Login />} />
 
-      {/* 🔐 Routes protégées par rôle */}
+      {/*  Routes protégées par rôle */}
       <Route
         path="/dashboard"
         element={
@@ -45,7 +45,7 @@ function App() {
         }
       />
 
-      {/* 🛑 Toute autre route redirige vers /login */}
+      {/* Toute autre route redirige vers /login */}
       <Route path="*" element={<Navigate to="/login" />} />
 
       <Route path="/client-login" element={<ClientLogin />} />

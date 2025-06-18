@@ -5,7 +5,7 @@ import ClientList from "../ClientList";
 import CreateColis from "../CreateColis";
 
 export default function GerantDashBoard() {
-    const { currentUser, logout } = useAuth();
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const handleLogout = async () => {
         await logout();

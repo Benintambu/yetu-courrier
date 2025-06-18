@@ -3,6 +3,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AdminCreateUser from "../../AdminCreateUser";
 import UserList from "../../UserList";
+import AdminZoneConfig from "../AdminZoneConfig/AdminZoneConfig";
 
 export default function AdminDashBoard() {
     const { currentUser, logout } = useAuth();
@@ -19,6 +20,7 @@ export default function AdminDashBoard() {
             <button onClick={handleLogout}>Se déconnecter</button>
             <AdminCreateUser />
             <UserList />
+            <AdminZoneConfig />
         </div>
     );
 }

@@ -9,6 +9,7 @@ import ChauffeurDashBoard from './pages/Chauffeur/ChauffeurDashBoard/ChauffeurDa
 import ResetPassword from './pages/Client/ResetPassword.jsx';
 import ClientLogin from './pages/Client/ClientLogin/ClientLogin.jsx';
 import ClientDashBoard from './pages/Client/ClientDashBoard/ClientDashBoard.jsx';
+import AdminZoneConfig from './pages/Admin/AdminZoneConfig/AdminZoneConfig.jsx';
 
 function App() {
   const { currentUser, role } = useAuth();
@@ -50,6 +51,15 @@ function App() {
 
       <Route path="/client-login" element={<ClientLogin />} />
       <Route path="/client-dash" element={<ClientDashBoard />} />
+
+      <Route
+        path="/admin/zones"
+        element={
+          currentUser && role === "admin"
+            ? <AdminZoneConfig />
+            : <Navigate to="/login" />
+        }
+      />
     </Routes>
   );
 }

@@ -80,3 +80,18 @@ exports.deleteColis = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// 📌 Ajouter cette fonction dans ton controller colis.controller.js
+exports.getAllColis = async (req, res) => {
+    try {
+        const db = require("../config/firebase").firestore();
+        const snapshot = await db.collection("colis").get();
+        const colis = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json(colis);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

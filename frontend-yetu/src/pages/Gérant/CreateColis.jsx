@@ -7,8 +7,17 @@ export default function CreateColis() {
 
     const [villeDepart, setVilleDepart] = useState(null);
     const [villeArriveeQuery, setVilleArriveeQuery] = useState("");
-    const [villeArriveeSuggestions, setVilleArriveeSuggestions] = useState([]);
+    const [villeSuggestions, setVilleSuggestions] = useState([]);
     const [villeArrivee, setVilleArrivee] = useState(null);
+
+    const generateSecretCode = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let code = "";
+        for (let i = 0; i < 6; i++) {
+            code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return code;
+    };
 
     const [form, setForm] = useState({
         nom: "",
@@ -28,15 +37,6 @@ export default function CreateColis() {
     const [clientSuggestions, setClientSuggestions] = useState([]);
     const [newClientFormVisible, setNewClientFormVisible] = useState(false);
     const [prixAuto, setPrixAuto] = useState(null);
-
-    const generateSecretCode = () => {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let code = "";
-        for (let i = 0; i < 6; i++) {
-            code += chars[Math.floor(Math.random() * chars.length)];
-        }
-        return code;
-    };
 
     useEffect(() => {
         const fetchVille = async () => {
@@ -71,11 +71,20 @@ export default function CreateColis() {
     const handleVilleArriveeSearch = async (e) => {
         const val = e.target.value;
         setVilleArriveeQuery(val);
+
         if (val.length >= 2) {
-            const res = await axios.get(`http://localhost:5000/api/villes/search?q=${val}`);
-            setVilleArriveeSuggestions(res.data);
+            try {
+                const res = await axios.get("http://localhost:5000/api/villes");
+                const filtered = res.data.filter(v =>
+                    v.nom.toLowerCase().includes(val.toLowerCase())
+                );
+                setVilleSuggestions(filtered);
+            } catch (err) {
+                console.error("Erreur chargement villes:", err);
+                setVilleSuggestions([]);
+            }
         } else {
-            setVilleArriveeSuggestions([]);
+            setVilleSuggestions([]);
         }
     };
 
@@ -221,12 +230,12 @@ export default function CreateColis() {
 
                 <input placeholder="Ville de destination" value={villeArriveeQuery} onChange={handleVilleArriveeSearch} />
                 <ul>
-                    {villeArriveeSuggestions.map(v => (
+                    {villeSuggestions.map(v => (
                         <li key={v.id}>{v.nom} ({v.zone})
                             <button type="button" onClick={() => {
                                 setVilleArrivee(v);
                                 setVilleArriveeQuery(v.nom);
-                                setVilleArriveeSuggestions([]);
+                                setVilleSuggestions([]);
                             }}>Sélectionner</button>
                         </li>
                     ))}

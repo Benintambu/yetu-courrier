@@ -6,7 +6,6 @@ exports.createVille = async (req, res) => {
 
     try {
         const db = admin.firestore();
-
         const docRef = await db.collection("villes").add({
             nom,
             province,
@@ -19,7 +18,6 @@ exports.createVille = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 exports.getAllVilles = async (req, res) => {
     try {
@@ -49,10 +47,10 @@ exports.deleteVille = async (req, res) => {
 
 exports.searchVilles = async (req, res) => {
     const { q } = req.query;
-
     try {
-        const db = require("../config/firebase").firestore();
+        if (!q) return res.status(400).json({ error: "Paramètre 'q' requis" });
 
+        const db = admin.firestore();
         const snapshot = await db.collection("villes")
             .where("nom", ">=", q)
             .where("nom", "<=", q + "\uf8ff")
@@ -66,6 +64,7 @@ exports.searchVilles = async (req, res) => {
 
         res.status(200).json(results);
     } catch (error) {
+        console.error("🔥 Erreur dans searchVilles :", error);
         res.status(500).json({ error: error.message });
     }
 };

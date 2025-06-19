@@ -4,6 +4,8 @@ import CreateClient from "../CreateClient";
 import ClientList from "../ClientList";
 import CreateColis from "../CreateColis";
 import ColisList from "../ColisList";
+import CreateExpedition from "../../../components/CreateExpedition";
+
 
 export default function GerantDashBoard() {
     const { logout } = useAuth();
@@ -21,6 +23,7 @@ export default function GerantDashBoard() {
             <ClientList />
             <CreateColis />
             <ColisList />
+            <CreateExpedition />
 
         </>
 

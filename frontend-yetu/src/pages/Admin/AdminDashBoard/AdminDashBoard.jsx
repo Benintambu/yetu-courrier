@@ -5,6 +5,7 @@ import AdminCreateUser from "../../AdminCreateUser";
 import UserList from "../../UserList";
 import AdminZoneConfig from "../AdminZoneConfig/AdminZoneConfig";
 import AdminTarifConfig from "../AdminTarifConfig/AdminTarifConfig";
+import AdminItineraireConfig from "../../../components/AdminItineraireConfig";
 
 export default function AdminDashBoard() {
     const { currentUser, logout } = useAuth();
@@ -23,6 +24,7 @@ export default function AdminDashBoard() {
             <UserList />
             <AdminZoneConfig />
             <AdminTarifConfig />
+            <AdminItineraireConfig />
         </div>
     );
 }

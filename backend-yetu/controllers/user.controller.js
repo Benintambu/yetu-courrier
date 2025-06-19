@@ -21,10 +21,13 @@ exports.createUserWithRole = async (req, res) => {
         await admin.auth().setCustomUserClaims(user.uid, { role });
 
         const db = admin.firestore();
+        let villeData = null;
 
-        // 🔥 récupérer la ville
-        const villeSnap = await db.collection("villes").doc(villeId).get();
-        const villeData = villeSnap.exists ? villeSnap.data() : null;
+        // 🔍 Chercher la ville uniquement si elle existe
+        if (villeId) {
+            const villeSnap = await db.collection("villes").doc(villeId).get();
+            villeData = villeSnap.exists ? { id: villeId, ...villeSnap.data() } : null;
+        }
 
         await db.collection("users").doc(user.uid).set({
             uid: user.uid,
@@ -33,11 +36,7 @@ exports.createUserWithRole = async (req, res) => {
             displayName,
             phone,
             matricule,
-            ville: villeData ? {
-                id: villeId,
-                nom: villeData.nom,
-                zone: villeData.zone
-            } : null,
+            ville: villeData,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -47,9 +46,47 @@ exports.createUserWithRole = async (req, res) => {
     }
 };
 
+/* exports.createUserWithRole = async (req, res) => {
+    const { email, password, displayName, role, phone, matricule } = req.body;
+
+    if (!email || !password || !displayName || !role) {
+        return res.status(400).json({ error: "Champs requis manquants" });
+    }
+
+    try {
+        // 🔐 Création du compte avec Firebase Auth
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+            phoneNumber: phone || undefined,
+        });
+
+        // 👇 Récupère bien son UID ici !
+        const uid = userRecord.uid;
+
+        // 🧾 Enregistre les infos dans Firestore sous users/{uid}
+        await admin.firestore().collection("users").doc(uid).set({
+            displayName,
+            email,
+            role,
+            phone,
+            matricule,
+            uid, // facultatif, mais pratique
+            createdAt: new Date()
+        });
+
+        res.status(201).json({ message: "Utilisateur créé", uid });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}; */
+
+
 
 // Récupérer les utilisateurs
-exports.getAllUsers = async (req, res) => {
+/* exports.getAllUsers = async (req, res) => {
     try {
         const db = require("../config/firebase").firestore();
         const snapshot = await db.collection("users").get();
@@ -59,7 +96,20 @@ exports.getAllUsers = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+}; */
+
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        const db = admin.firestore();
+        const snapshot = await db.collection("users").get();
+        const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
+
 
 // Modifier les utilisateurs
 exports.updateUser = async (req, res) => {

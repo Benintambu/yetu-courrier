@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import VilleSearch from "../components/VilleSearch";
 
 export default function AdminCreateUser() {
     const [form, setForm] = useState({
@@ -13,11 +12,33 @@ export default function AdminCreateUser() {
     });
 
     const [selectedVille, setSelectedVille] = useState(null);
+    const [villesDisponibles, setVillesDisponibles] = useState([]);
+    const [villeQuery, setVilleQuery] = useState("");
+    const [villeSuggestions, setVilleSuggestions] = useState([]);
+
+    useEffect(() => {
+        const fetchVilles = async () => {
+            const res = await axios.get("http://localhost:5000/api/villes");
+            setVillesDisponibles(res.data);
+        };
+        fetchVilles();
+    }, []);
+
+    const handleSearchVille = (val) => {
+        setVilleQuery(val);
+        if (val.length >= 2) {
+            const filtered = villesDisponibles.filter(v =>
+                v.nom.toLowerCase().includes(val.toLowerCase())
+            );
+            setVilleSuggestions(filtered);
+        } else {
+            setVilleSuggestions([]);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Si gérant sans ville → refuser
         if (form.role === "gerant" && !selectedVille) {
             alert("Veuillez sélectionner une ville pour ce gérant.");
             return;
@@ -33,6 +54,8 @@ export default function AdminCreateUser() {
             alert("Utilisateur créé !");
             setForm({ email: "", password: "", displayName: "", role: "gerant", phone: "", matricule: "" });
             setSelectedVille(null);
+            setVilleQuery("");
+            setVilleSuggestions([]);
         } catch (err) {
             alert("Erreur : " + (err.response?.data?.error || err.message));
         }
@@ -52,9 +75,28 @@ export default function AdminCreateUser() {
                 <option value="admin">Admin</option>
             </select>
 
-            {/* Affiche la recherche de ville uniquement pour les gérants */}
             {form.role === "gerant" && (
-                <VilleSearch onSelect={setSelectedVille} />
+                <div style={{ marginTop: "1rem" }}>
+                    <label>Ville assignée (Gérant uniquement) :</label>
+                    <input
+                        type="text"
+                        placeholder="Rechercher une ville..."
+                        value={villeQuery}
+                        onChange={e => handleSearchVille(e.target.value)}
+                    />
+                    <ul>
+                        {villeSuggestions.map(v => (
+                            <li key={v.id}>
+                                {v.nom} ({v.zone})
+                                <button type="button" onClick={() => {
+                                    setSelectedVille(v);
+                                    setVilleQuery(v.nom);
+                                    setVilleSuggestions([]);
+                                }}>Sélectionner</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             <button type="submit">Créer l'utilisateur</button>

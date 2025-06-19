@@ -4,14 +4,26 @@ import axios from "axios";
 export default function VilleSearch({ onSelect }) {
     const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const handleChange = async (e) => {
         const val = e.target.value;
         setQuery(val);
+        setError("");
 
         if (val.length >= 2) {
-            const res = await axios.get(`http://localhost:5000/api/villes/search?q=${val}`);
-            setSuggestions(res.data);
+            try {
+                setLoading(true);
+                const res = await axios.get(`http://localhost:5000/api/villes/search?q=${val}`);
+                setSuggestions(res.data || []);
+            } catch (err) {
+                console.error("Erreur recherche ville :", err.message);
+                setError("Erreur lors de la recherche.");
+                setSuggestions([]);
+            } finally {
+                setLoading(false);
+            }
         } else {
             setSuggestions([]);
         }
@@ -26,15 +38,23 @@ export default function VilleSearch({ onSelect }) {
                 value={query}
                 onChange={handleChange}
             />
-            <ul>
+            {loading && <p>Recherche...</p>}
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            <ul style={{ listStyle: "none", padding: 0 }}>
                 {suggestions.map(v => (
                     <li key={v.id}>
                         {v.nom} ({v.zone})
-                        <button onClick={() => {
-                            onSelect(v);
-                            setQuery(v.nom); // pour afficher dans le champ
-                            setSuggestions([]);
-                        }}>Sélectionner</button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onSelect(v);
+                                setQuery(v.nom); // Affiche la ville choisie
+                                setSuggestions([]);
+                            }}
+                            style={{ marginLeft: 10 }}
+                        >
+                            Sélectionner
+                        </button>
                     </li>
                 ))}
             </ul>

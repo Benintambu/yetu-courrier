@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import CreateClient from "../CreateClient";
 import ClientList from "../ClientList";
 import CreateColis from "../CreateColis";
+import ColisList from "../ColisList";
 
 export default function GerantDashBoard() {
     const { logout } = useAuth();
@@ -19,6 +20,7 @@ export default function GerantDashBoard() {
             <CreateClient />
             <ClientList />
             <CreateColis />
+            <ColisList />
 
         </>
 

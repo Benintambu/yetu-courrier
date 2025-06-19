@@ -1,61 +1,56 @@
 const admin = require("../config/firebase");
 
-function generateCodeSecret(length = 6) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+function generateSecretCode() {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
-    for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
     }
     return code;
 }
 
 exports.createColis = async (req, res) => {
     const {
-        nom,
-        poids,
-        longueur,
-        largeur,
-        contenu,
-        prix,
-        zoneDepart,
-        zoneArrivee,
-        destinataire,
-        expediteur
+        nom, poids, dimensions, contenu, prix,
+        codeSecret, villeDepart, villeArrivee,
+        destinataire, createdBy
     } = req.body;
-
-    function generateCodeSecret(length = 6) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let code = "";
-        for (let i = 0; i < length; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-    }
 
     try {
         const db = require("../config/firebase").firestore();
-        const colisRef = db.collection("colis");
 
-        const newColis = {
-            nom,
-            poids,
-            dimensions: {
-                longueur,
-                largeur
-            },
-            contenu,
-            prix,
-            codeSecret: generateCodeSecret(),
-            zoneDepart,
-            zoneArrivee,
+        await db.collection("colis").add({
+            nom, poids, dimensions, contenu, prix,
+            codeSecret,
+            villeDepart,
+            villeArrivee,
             destinataire,
-            expediteur,
-            statut: "enregistré",
-            dateCreation: new Date()
-        };
+            createdBy,
+            createdAt: new Date()
+        });
 
-        await colisRef.add(newColis);
-        res.status(201).json({ message: "Colis enregistré avec succès" });
+        res.status(201).json({ message: "Colis créé avec succès" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getColisByUser = async (req, res) => {
+    const { uid } = req.params;
+
+    try {
+        const db = require("../config/firebase").firestore();
+        const snapshot = await db.collection("colis")
+            .where("createdBy", "==", uid)
+            /* .orderBy("createdAt", "desc") */
+            .get();
+
+        const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -9,6 +9,8 @@ const dotenv = require("dotenv");
 const userRoutes = require("./routes/user.routes");
 const colisRoutes = require("./routes/colis.routes");
 const villeRoutes = require("./routes/ville.routes");
+const tarifRoutes = require("./routes/tarif.routes");
+
 dotenv.config();
 //require("dotenv").config();
 
@@ -23,6 +25,8 @@ app.use(express.json());
 app.use("/api", userRoutes);
 app.use("/api", colisRoutes);
 app.use("/api", villeRoutes);
+app.use("/api", tarifRoutes);
+
 
 
 const PORT = process.env.PORT || 5000;

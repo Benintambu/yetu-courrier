@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AdminCreateUser from "../../AdminCreateUser";
 import UserList from "../../UserList";
 import AdminZoneConfig from "../AdminZoneConfig/AdminZoneConfig";
+import AdminTarifConfig from "../AdminTarifConfig/AdminTarifConfig";
 
 export default function AdminDashBoard() {
     const { currentUser, logout } = useAuth();
@@ -21,6 +22,7 @@ export default function AdminDashBoard() {
             <AdminCreateUser />
             <UserList />
             <AdminZoneConfig />
+            <AdminTarifConfig />
         </div>
     );
 }

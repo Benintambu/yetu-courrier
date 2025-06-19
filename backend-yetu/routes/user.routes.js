@@ -19,6 +19,8 @@ const {
 
 const { createColis, getColisByUser } = require("../controllers/colis.controller");
 
+const { updateColis, deleteColis } = require("../controllers/colis.controller");
+
 // Routes admin
 router.post("/create-user", createUserWithRole);
 router.get("/users", getAllUsers);
@@ -30,6 +32,9 @@ router.post("/create-client", createClient);
 router.get("/clients", getAllClients);
 router.put("/clients/:uid", updateClient);
 router.delete("/clients/:uid", deleteClient);
+
 router.get("/colis/user/:uid", getColisByUser);
+router.put("/colis/:id", updateColis);
+router.delete("/colis/:id", deleteColis);
 
 module.exports = router;

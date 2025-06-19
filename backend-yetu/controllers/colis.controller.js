@@ -55,3 +55,28 @@ exports.getColisByUser = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.updateColis = async (req, res) => {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    try {
+        const db = admin.firestore();
+        await db.collection("colis").doc(id).update(updatedData);
+        res.status(200).json({ message: "Colis mis à jour avec succès" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteColis = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const db = admin.firestore();
+        await db.collection("colis").doc(id).delete();
+        res.status(200).json({ message: "Colis supprimé avec succès" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

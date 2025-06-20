@@ -5,6 +5,7 @@ import ClientList from "../ClientList";
 import CreateColis from "../CreateColis";
 import ColisList from "../ColisList";
 import CreateExpedition from "../../../components/CreateExpedition";
+import ExpeditionList from "../../../components/ExpeditionList";
 
 
 export default function GerantDashBoard() {
@@ -24,6 +25,7 @@ export default function GerantDashBoard() {
             <CreateColis />
             <ColisList />
             <CreateExpedition />
+            <ExpeditionList />
 
         </>
 

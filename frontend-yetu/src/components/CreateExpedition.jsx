@@ -12,6 +12,7 @@ export default function CreateExpedition() {
     const [selectedItineraire, setSelectedItineraire] = useState(null);
     const [colisProposes, setColisProposes] = useState([]);
     const [selectedColisIds, setSelectedColisIds] = useState([]);
+    const [chauffeurMessage, setChauffeurMessage] = useState("");
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/itineraires").then(res => setItineraires(res.data));
@@ -20,6 +21,7 @@ export default function CreateExpedition() {
     const handleChauffeurSearch = async (e) => {
         const val = e.target.value;
         setChauffeurQuery(val);
+        setChauffeurMessage("");  // Reset message
         if (val.length < 2) return setChauffeurSuggestions([]);
 
         try {
@@ -34,6 +36,26 @@ export default function CreateExpedition() {
             setChauffeurSuggestions(results);
         } catch (err) {
             console.error("Erreur de recherche chauffeur:", err);
+        }
+    };
+
+    const checkChauffeurDisponibilite = async (chauffeur) => {
+        try {
+            const res = await axios.get("http://localhost:5000/api/expeditions");
+            const expActives = res.data.filter(exp =>
+                exp.chauffeurUid === chauffeur.uid &&
+                (exp.statut === "en attente" || exp.statut === "en cours")
+            );
+
+            if (expActives.length > 0) {
+                setChauffeurMessage(`⚠️ Ce chauffeur est déjà affecté à une expédition active : ${expActives[0].itineraireNom}`);
+            } else {
+                setChauffeurMessage("✅ Chauffeur disponible !");
+            }
+
+        } catch (err) {
+            console.error("Erreur vérif dispo chauffeur:", err);
+
         }
     };
 
@@ -61,8 +83,13 @@ export default function CreateExpedition() {
             });
             alert("Expédition créée !");
         } catch (err) {
-            alert("Erreur : " + err.message);
+            if (err.response?.status === 409) {
+                alert(err.response.data.error);
+            } else {
+                alert("Erreur : " + (err.response?.data?.error || err.message));
+            }
         }
+
     };
 
     return (
@@ -76,18 +103,23 @@ export default function CreateExpedition() {
             />
             <ul>
                 {chauffeurSuggestions.map(ch => (
-                    <li key={ch.uid}>{ch.displayName} – {ch.email}
+                    <li key={ch.uid}>
+                        {ch.displayName} – {ch.email}
                         <button onClick={() => {
                             setSelectedChauffeur(ch);
                             setChauffeurQuery(ch.displayName);
                             setChauffeurSuggestions([]);
+                            checkChauffeurDisponibilite(ch);
                         }}>Sélectionner</button>
                     </li>
                 ))}
             </ul>
 
             {selectedChauffeur && (
-                <p>✅ Chauffeur sélectionné : <strong>{selectedChauffeur.displayName}</strong></p>
+                <p>
+                    ✅ Chauffeur sélectionné : <strong>{selectedChauffeur.displayName}</strong><br />
+                    {chauffeurMessage && <span>{chauffeurMessage}</span>}
+                </p>
             )}
 
             <select onChange={e => handleItineraireSelect(e.target.value)}>

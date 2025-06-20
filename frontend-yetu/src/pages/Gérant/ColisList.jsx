@@ -28,6 +28,36 @@ export default function ColisList() {
         fetchColis();
     }, [currentUser]);
 
+    useEffect(() => {
+        const calculateTarif = async () => {
+            if (
+                editForm.poids &&
+                editForm.villeDepart?.zone &&
+                editForm.villeArrivee?.zone
+            ) {
+                try {
+                    const res = await axios.get("http://localhost:5000/api/tarifs/calculate", {
+                        params: {
+                            poids: parseFloat(editForm.poids),
+                            zoneDepart: editForm.villeDepart.zone,
+                            zoneArrivee: editForm.villeArrivee.zone
+                        }
+                    });
+                    setPrixAuto(res.data.prix);
+                } catch (err) {
+                    console.error("Erreur recalcul prix :", err.message);
+                    setPrixAuto(null);
+                }
+            }
+        };
+
+        if (editingId) {
+            calculateTarif();
+        }
+    }, [editForm.poids, editForm.villeArrivee, editForm.villeDepart, editingId]);
+
+
+
     const handleDelete = async (id) => {
         if (!window.confirm("Supprimer ce colis ?")) return;
         try {
@@ -41,16 +71,8 @@ export default function ColisList() {
 
     const handleUpdate = async (id) => {
         try {
-            const tarifRes = await axios.get("http://localhost:5000/api/tarifs/calculate", {
-                params: {
-                    poids: parseFloat(editForm.poids),
-                    zoneDepart: editForm.villeDepart?.zone,
-                    zoneArrivee: editForm.villeArrivee?.zone
-                }
-            });
-            const prix = tarifRes.data.prix;
-
             let clientData = editForm.client;
+
             if (!clientData?.uid) {
                 const newClientRes = await axios.post("http://localhost:5000/api/create-client", {
                     displayName: clientData.displayName,
@@ -65,7 +87,7 @@ export default function ColisList() {
 
             const updatedPayload = {
                 ...editForm,
-                prix,
+                prix: prixAuto,
                 client: {
                     uid: clientData.uid,
                     displayName: clientData.displayName,
@@ -82,6 +104,7 @@ export default function ColisList() {
             alert("Erreur : " + err.message);
         }
     };
+
 
     const searchClients = async (query) => {
         setClientQuery(query);
@@ -116,7 +139,12 @@ export default function ColisList() {
                         {editingId === c.id ? (
                             <div>
                                 <input placeholder="Nom" value={editForm.nom} onChange={e => setEditForm({ ...editForm, nom: e.target.value })} />
-                                <input placeholder="Poids" value={editForm.poids} onChange={e => setEditForm({ ...editForm, poids: e.target.value })} />
+                                <input
+                                    placeholder="Poids"
+                                    value={editForm.poids}
+                                    onChange={e => setEditForm({ ...editForm, poids: e.target.value })}
+                                />
+
                                 <input placeholder="Contenu" value={editForm.contenu} onChange={e => setEditForm({ ...editForm, contenu: e.target.value })} />
                                 <input placeholder="Longueur" value={editForm.dimensions.longueur} onChange={e => setEditForm({ ...editForm, dimensions: { ...editForm.dimensions, longueur: e.target.value } })} />
                                 <input placeholder="Largeur" value={editForm.dimensions.largeur} onChange={e => setEditForm({ ...editForm, dimensions: { ...editForm.dimensions, largeur: e.target.value } })} />
@@ -125,7 +153,29 @@ export default function ColisList() {
                                 <input placeholder="Email destinataire" value={editForm.destinataire.email} onChange={e => setEditForm({ ...editForm, destinataire: { ...editForm.destinataire, email: e.target.value } })} />
                                 <input placeholder="Téléphone destinataire" value={editForm.destinataire.phone} onChange={e => setEditForm({ ...editForm, destinataire: { ...editForm.destinataire, phone: e.target.value } })} />
 
-                                <input placeholder="Ville de destination" value={villeArriveeQuery} onChange={handleVilleArriveeSearch} />
+                                <input
+                                    placeholder="Ville de destination"
+                                    value={villeArriveeQuery}
+                                    onChange={handleVilleArriveeSearch}
+                                />
+                                <ul>
+                                    {villeArriveeSuggestions.map(v => (
+                                        <li key={v.id}>
+                                            {v.nom} ({v.zone})
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setEditForm({ ...editForm, villeArrivee: v });
+                                                    setVilleArriveeQuery(v.nom);
+                                                    setVilleArriveeSuggestions([]);
+                                                }}
+                                            >
+                                                Sélectionner
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+
                                 <ul>
                                     {villeArriveeSuggestions.map(v => (
                                         <li key={v.id}>{v.nom} ({v.zone})

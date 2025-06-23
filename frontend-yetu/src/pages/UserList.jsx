@@ -8,8 +8,10 @@ export default function UserList() {
 
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({});
+    const [villeQuery, setVilleQuery] = useState("");
+    const [villeSuggestions, setVilleSuggestions] = useState([]);
 
-    // Récupérer la liste des utilisateurs
+    // Récupérer les utilisateurs
     const fetchUsers = async () => {
         const res = await axios.get("http://localhost:5000/api/users");
         setUsers(res.data);
@@ -19,20 +21,34 @@ export default function UserList() {
         fetchUsers();
     }, []);
 
-    // Mise à jour d'un utilisateur
+    // Récupérer suggestions de villes
+    const handleVilleSearch = async (query) => {
+        setVilleQuery(query);
+        if (query.length < 2) {
+            setVilleSuggestions([]);
+            return;
+        }
+
+        try {
+            const res = await axios.get(`http://localhost:5000/api/villes/search?q=${query}`);
+            setVilleSuggestions(res.data);
+        } catch (err) {
+            console.error("Erreur recherche villes :", err.message);
+        }
+    };
+
+    // Enregistrer modifs utilisateur
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             await axios.put(`http://localhost:5000/api/users/${editingUser.uid}`, formData);
             alert("Utilisateur modifié !");
             setEditingUser(null);
-            fetchUsers(); // rafraîchir la liste
+            fetchUsers();
         } catch (err) {
             alert("Erreur : " + err.message);
         }
     };
-
-
 
     return (
         <div>
@@ -44,7 +60,6 @@ export default function UserList() {
                         {user.email === currentUser.email && (
                             <span style={{ color: "green", fontStyle: "italic" }}> (vous)</span>
                         )}
-                        {/* Modifier Utilisateur */}
                         <button style={{ marginLeft: 10 }} onClick={() => {
                             setEditingUser(user);
                             setFormData({
@@ -53,23 +68,21 @@ export default function UserList() {
                                 phone: user.phone,
                                 matricule: user.matricule,
                                 role: user.role,
-                                status: user.status || "active"
+                                status: user.status || "active",
+                                ville: user.ville || "" // nouveau champ
                             });
+                            setVilleQuery(user.ville?.nom || "");
                         }}>
                             Modifier
                         </button>
-
-                        {/* Supprimer */}
                         <button style={{ marginLeft: 10 }} onClick={() => {
                             if (window.confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) {
                                 axios.delete(`http://localhost:5000/api/users/${user.uid}`)
                                     .then(() => {
                                         alert("Utilisateur supprimé !");
-                                        fetchUsers(); // recharge la liste
+                                        fetchUsers();
                                     })
-                                    .catch(err => {
-                                        alert("Erreur : " + err.message);
-                                    });
+                                    .catch(err => alert("Erreur : " + err.message));
                             }
                         }}>
                             Supprimer
@@ -88,30 +101,24 @@ export default function UserList() {
                         value={formData.email || ""}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
-
                     <input
                         type="text"
                         placeholder="Nom"
                         value={formData.displayName || ""}
                         onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                     />
-                    <br />
-
                     <input
                         type="text"
                         placeholder="Téléphone"
                         value={formData.phone || ""}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
-                    <br />
-
                     <input
                         type="text"
                         placeholder="Matricule"
                         value={formData.matricule || ""}
                         onChange={(e) => setFormData({ ...formData, matricule: e.target.value })}
                     />
-                    <br />
 
                     <select
                         value={formData.role}
@@ -121,7 +128,6 @@ export default function UserList() {
                         <option value="gerant">Gérant</option>
                         <option value="chauffeur">Chauffeur</option>
                     </select>
-                    <br />
 
                     <select
                         value={formData.status}
@@ -130,7 +136,32 @@ export default function UserList() {
                         <option value="active">Actif</option>
                         <option value="disabled">Désactivé</option>
                     </select>
-                    <br />
+
+                    {/* Champ ville pour gérant */}
+                    {formData.role === "gerant" && (
+                        <>
+                            <input
+                                placeholder="Rechercher une ville"
+                                value={villeQuery}
+                                onChange={(e) => handleVilleSearch(e.target.value)}
+                            />
+                            <ul>
+                                {villeSuggestions.map(v => (
+                                    <li key={v.id}>
+                                        {v.nom}
+                                        <button type="button" onClick={() => {
+                                            setFormData({ ...formData, ville: v });
+                                            setVilleQuery(v.nom);
+                                            setVilleSuggestions([]);
+                                        }}>Sélectionner</button>
+                                    </li>
+                                ))}
+                            </ul>
+                            {formData.ville && (
+                                <p>✅ Ville sélectionnée : {formData.ville.nom}</p>
+                            )}
+                        </>
+                    )}
 
                     <button type="submit">Enregistrer</button>
                     <button type="button" onClick={() => setEditingUser(null)} style={{ marginLeft: 10 }}>

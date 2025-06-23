@@ -1,6 +1,5 @@
-// src/App.js
 import './App.css';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from "./contexts/AuthContext";
 import Login from './pages/Login/Login.jsx';
 import AdminDashBoard from './pages/Admin/AdminDashBoard/AdminDashBoard.jsx';
@@ -12,15 +11,21 @@ import ClientDashBoard from './pages/Client/ClientDashBoard/ClientDashBoard.jsx'
 import AdminZoneConfig from './pages/Admin/AdminZoneConfig/AdminZoneConfig.jsx';
 
 function App() {
-  const { currentUser, role } = useAuth();
+  const { currentUser, role, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <div>Chargement...</div>;
+
+  // Redirection automatique si déjà connecté
+  if (currentUser && location.pathname === "/login") {
+    return <Navigate to={getDashboardPath(role)} />;
+  }
 
   return (
     <Routes>
-      {/*  Accessible sans être connecté */}
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/login" element={<Login />} />
 
-      {/*  Routes protégées par rôle */}
       <Route
         path="/dashboard"
         element={
@@ -46,9 +51,6 @@ function App() {
         }
       />
 
-      {/* Toute autre route redirige vers /login */}
-      <Route path="*" element={<Navigate to="/login" />} />
-
       <Route path="/client-login" element={<ClientLogin />} />
       <Route path="/client-dash" element={<ClientDashBoard />} />
 
@@ -60,8 +62,19 @@ function App() {
             : <Navigate to="/login" />
         }
       />
+
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
+}
+
+function getDashboardPath(role) {
+  switch (role) {
+    case "admin": return "/dashboard";
+    case "gerant": return "/gerant";
+    case "chauffeur": return "/chauffeur";
+    default: return "/login";
+  }
 }
 
 export default App;

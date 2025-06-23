@@ -9,16 +9,17 @@ import ExpeditionList from "../../../components/ExpeditionList";
 
 
 export default function GerantDashBoard() {
-    const { logout } = useAuth();
+    const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
     const handleLogout = async () => {
         await logout();
-        navigate("/"); // ou vers ta page Login
+        await logout();
+        setTimeout(() => navigate("/"), 0); // ou vers ta page Login
     };
 
     return (
         <>
-            <h1>Gérant</h1>
+            <h1>Gérant ({currentUser.displayName})</h1>
             <button onClick={handleLogout}>Déconnexion</button>
             <CreateClient />
             <ClientList />

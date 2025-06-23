@@ -13,7 +13,7 @@ export default function ChauffeurDashBoard() {
 
     return (
         <>
-            <h1>Chauffeur</h1>
+            <h1>Chauffeur ({currentUser.displayName})</h1>
             <button onClick={handleLogout}>Déconnexion</button>
         </>
     )

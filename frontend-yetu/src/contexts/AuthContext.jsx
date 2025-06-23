@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => signOut(auth);
 
     useEffect(() => {
+        console.log("AuthStateChanged triggered for role:", role);
         let isMounted = true;
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (!isMounted) return;

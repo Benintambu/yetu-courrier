@@ -1,8 +1,6 @@
-// Login.jsx
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase";
-// CSS
 import './Login.css';
 import logo from '../../assets/img/Logo_yetu.png';
 import imgSvg from '../../assets/img/8385578_3897496.svg';
@@ -11,6 +9,7 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoggingIn, setIsLoggingIn] = useState(false); // Déplacé ici au niveau du composant
 
     const showPassword = () => {
         const passwordField = document.getElementById('password');
@@ -28,15 +27,19 @@ export default function Login() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
+
+        if (isLoggingIn) return;
+
         try {
+            setIsLoggingIn(true);
             await signInWithEmailAndPassword(auth, email, password);
-            // Pas besoin de redirection ici, elle sera gérée par onAuthStateChanged
         } catch (err) {
+            console.error("❌ Erreur login :", err);
             setError("Email ou mot de passe incorrect.");
+        } finally {
+            setIsLoggingIn(false);
         }
     };
-
-
 
     return (
         <div className="container-login">
@@ -74,7 +77,9 @@ export default function Login() {
                             <i className='bxr bx-eye' onClick={showPassword}></i>
                         </div>
 
-                        <button type="submit">Valider</button>
+                        <button type="submit" disabled={isLoggingIn}>
+                            {isLoggingIn ? 'Connexion en cours...' : 'Valider'}
+                        </button>
                         <div className="error-message">{error && <p>{error}</p>}</div>
                     </form>
                 </div>

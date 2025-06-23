@@ -1,4 +1,5 @@
 import './App.css';
+import { useState, useEffect } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from "./contexts/AuthContext";
 import Login from './pages/Login/Login.jsx';
@@ -13,25 +14,31 @@ import AdminZoneConfig from './pages/Admin/AdminZoneConfig/AdminZoneConfig.jsx';
 function App() {
   const { currentUser, role, loading } = useAuth();
   const location = useLocation();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   if (loading) return <div>Chargement...</div>;
 
-  // Redirection automatique si déjà connecté
-  if (currentUser && location.pathname === "/login") {
-    return <Navigate to={getDashboardPath(role)} />;
+  // Redirection conditionnelle + vérification de montage
+  if (isMounted && currentUser && location.pathname === "/login") {
+    return <Navigate to={getDashboardPath(role)} replace />; // Notez `replace` ici
   }
 
   return (
     <Routes>
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Login />} replace />
 
       <Route
         path="/dashboard"
         element={
           currentUser && role === "admin"
             ? <AdminDashBoard />
-            : <Navigate to="/login" />
+            : <Navigate to="/login" replace />
         }
       />
       <Route
@@ -39,7 +46,7 @@ function App() {
         element={
           currentUser && role === "gerant"
             ? <GerantDashBoard />
-            : <Navigate to="/login" />
+            : <Navigate to="/login" replace />
         }
       />
       <Route
@@ -47,7 +54,7 @@ function App() {
         element={
           currentUser && role === "chauffeur"
             ? <ChauffeurDashBoard />
-            : <Navigate to="/login" />
+            : <Navigate to="/login" replace />
         }
       />
 
@@ -59,11 +66,11 @@ function App() {
         element={
           currentUser && role === "admin"
             ? <AdminZoneConfig />
-            : <Navigate to="/login" />
+            : <Navigate to="/login" replace />
         }
       />
 
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to="/login" />} replace />
     </Routes>
   );
 }

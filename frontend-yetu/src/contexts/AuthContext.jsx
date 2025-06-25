@@ -1,9 +1,11 @@
 // AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, getIdTokenResult, signOut } from "firebase/auth";
+import { onAuthStateChanged, getIdTokenResult, signOut, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { auth } from "../firebase";
+import axios from "axios";
 
 const AuthContext = createContext();
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -34,13 +36,6 @@ export const AuthProvider = ({ children }) => {
             unsubscribe();
         };
     }, []);
-
-
-
-
-
-
-
 
     return (
         <AuthContext.Provider value={{ currentUser, role, logout, loading }}>

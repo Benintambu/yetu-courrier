@@ -13,25 +13,22 @@ import AdminZoneConfig from './pages/Admin/AdminZoneConfig/AdminZoneConfig.jsx';
 
 function App() {
   const { currentUser, role, loading } = useAuth();
-  const location = useLocation();
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
 
   if (loading) return <div>Chargement...</div>;
 
-  // Redirection conditionnelle + vérification de montage
+  /* // Redirection conditionnelle + vérification de montage
   if (isMounted && currentUser && location.pathname === "/login") {
     return <Navigate to={getDashboardPath(role)} replace />; // Notez `replace` ici
-  }
+  } */
 
   return (
     <Routes>
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/login" element={<Login />} replace />
+      <Route
+        path="/login"
+        element={currentUser ? <Navigate to={getDashboardPath(role)} replace /> : <Login />}
+      />
 
       <Route
         path="/dashboard"
@@ -70,7 +67,11 @@ function App() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/login" />} replace />
+      <Route path="*" element={
+        currentUser
+          ? <Navigate to={getDashboardPath(role)} replace />
+          : <Navigate to="/login" replace />
+      } />
     </Routes>
   );
 }
@@ -82,6 +83,16 @@ function getDashboardPath(role) {
     case "chauffeur": return "/chauffeur";
     default: return "/login";
   }
+}
+
+function AuthRedirector() {
+  const { currentUser, role } = useAuth();
+  const location = useLocation();
+
+  if (currentUser && location.pathname === "/login") {
+    return <Navigate to={getDashboardPath(role)} replace />;
+  }
+  return null;
 }
 
 export default App;

@@ -7,7 +7,8 @@ const {
     updateStatut,
     addColisToExpedition,
     deleteExpedition,
-    updateChauffeur
+    updateChauffeur,
+    getExpeditionsByGerant
 } = require("../controllers/expedition.controller");
 const admin = require("firebase-admin");
 
@@ -32,6 +33,8 @@ router.put("/expeditions/:expId/statut", updateStatut);
 
 router.delete("/expeditions/:id", deleteExpedition);
 router.put("/expeditions/:expId/chauffeur", updateChauffeur);
+// par exemple
+router.get("/expeditions/gerant/:uid", getExpeditionsByGerant);
 
 
 module.exports = router;

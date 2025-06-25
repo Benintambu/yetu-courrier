@@ -8,20 +8,38 @@ export default function CreateExpedition() {
     const [chauffeurSuggestions, setChauffeurSuggestions] = useState([]);
     const [selectedChauffeur, setSelectedChauffeur] = useState(null);
 
-    const [itineraires, setItineraires] = useState([]);
+    const [filteredItineraires, setFilteredItineraires] = useState([]);
     const [selectedItineraire, setSelectedItineraire] = useState(null);
     const [colisProposes, setColisProposes] = useState([]);
-    const [selectedColisIds, setSelectedColisIds] = useState([]);
     const [chauffeurMessage, setChauffeurMessage] = useState("");
+    const [gerantVille, setGerantVille] = useState(null);
 
     useEffect(() => {
-        axios.get("http://localhost:5000/api/itineraires").then(res => setItineraires(res.data));
-    }, []);
+        const fetchData = async () => {
+            try {
+                // 🔥 Charge directement les itinéraires filtrés par le backend
+                const itinRes = await axios.get(`http://localhost:5000/api/itineraires/for-gerant/${currentUser.uid}`);
+                setFilteredItineraires(itinRes.data);
+
+                // 🔥 Charge les infos du gérant
+                const userRes = await axios.get(`http://localhost:5000/api/users/${currentUser.uid}`);
+                if (userRes.data.role !== "gerant") {
+                    alert("⚠️ Seuls les gérants peuvent créer une expédition.");
+                    return;
+                }
+                setGerantVille(userRes.data.ville);
+            } catch (err) {
+                console.error("Erreur chargement données :", err);
+            }
+        };
+
+        fetchData();
+    }, [currentUser.uid]);
 
     const handleChauffeurSearch = async (e) => {
         const val = e.target.value;
         setChauffeurQuery(val);
-        setChauffeurMessage("");  // Reset message
+        setChauffeurMessage("");
         if (val.length < 2) return setChauffeurSuggestions([]);
 
         try {
@@ -52,29 +70,36 @@ export default function CreateExpedition() {
             } else {
                 setChauffeurMessage("✅ Chauffeur disponible !");
             }
-
         } catch (err) {
-            console.error("Erreur vérif dispo chauffeur:", err);
-
+            console.error("Erreur vérification dispo chauffeur:", err);
         }
     };
 
     const handleItineraireSelect = async (itinId) => {
-        const itin = itineraires.find(i => i.id === itinId);
+        const itin = filteredItineraires.find(i => i.id === itinId);
         setSelectedItineraire(itin);
         if (!itin?.villes?.length) return;
 
         const villeDepart = itin.villes[0].nom;
         const destinations = itin.villes.slice(1).map(v => v.nom);
 
-        const res = await axios.get("http://localhost:5000/api/colis");
-        const matches = res.data.filter(c => c.villeDepart?.nom === villeDepart && destinations.includes(c.villeArrivee?.nom));
-        setColisProposes(matches);
-        setSelectedColisIds(matches.map(c => c.id));
+        try {
+            const res = await axios.get("http://localhost:5000/api/colis");
+            const matches = res.data.filter(c =>
+                c.villeDepart?.nom === villeDepart &&
+                destinations.includes(c.villeArrivee?.nom)
+            );
+            setColisProposes(matches);
+        } catch (err) {
+            console.error("Erreur chargement colis :", err);
+        }
     };
 
     const handleSubmit = async () => {
-        if (!selectedItineraire || !selectedChauffeur) return alert("Tous les champs sont obligatoires");
+        if (!selectedItineraire || !selectedChauffeur) {
+            alert("Tous les champs sont obligatoires");
+            return;
+        }
         try {
             await axios.post("http://localhost:5000/api/expeditions", {
                 itineraireId: selectedItineraire.id,
@@ -89,12 +114,15 @@ export default function CreateExpedition() {
                 alert("Erreur : " + (err.response?.data?.error || err.message));
             }
         }
-
     };
 
     return (
         <div>
             <h2>Créer une expédition</h2>
+
+            {gerantVille && (
+                <p>🌍 Ville gérée : <strong>{gerantVille.nom}</strong></p>
+            )}
 
             <input
                 placeholder="🔍 Rechercher un chauffeur"
@@ -123,16 +151,18 @@ export default function CreateExpedition() {
             )}
 
             <select onChange={e => handleItineraireSelect(e.target.value)}>
-                <option value="">-- Itinéraire --</option>
-                {itineraires.map(it => (
+                <option value="">-- Sélectionner un itinéraire --</option>
+                {filteredItineraires.map(it => (
                     <option key={it.id} value={it.id}>{it.nom}</option>
                 ))}
             </select>
 
-            <h4>Colis affectés</h4>
+            <h4>Colis affectés :</h4>
             <ul>
                 {colisProposes.map(c => (
-                    <li key={c.id}>{c.nom} → {c.villeArrivee?.nom}</li>
+                    <li key={c.id}>
+                        {c.nom} → {c.villeArrivee?.nom}
+                    </li>
                 ))}
             </ul>
 

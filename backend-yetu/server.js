@@ -1,7 +1,5 @@
 // server.js
 require("dotenv").config();
-console.log("EMAIL_FROM =", process.env.EMAIL_FROM);
-console.log("EMAIL_PASS =", process.env.EMAIL_PASS);
 
 const express = require("express");
 const cors = require("cors");

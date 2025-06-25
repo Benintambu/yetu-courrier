@@ -1,13 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const admin = require("../config/firebase");
-const { createItineraire, getItineraires, deleteItineraire } = require("../controllers/itineraire.controller");
+const { createItineraire, getItinerairesForGerant, deleteItineraire, getItineraires } = require("../controllers/itineraire.controller");
 
 // 👉 Route pour récupérer tous les itinéraires
-router.get("/itineraires", getItineraires);
+router.get("/itineraires/for-gerant/:gerantUid", getItinerairesForGerant);
 
 // 👉 Route pour créer un itinéraire
 router.post("/itineraires", createItineraire);
+
+router.get("/itineraires", getItineraires);
 
 // 👉 Route pour supprimer un itinéraire
 router.delete("/itineraires/:id", deleteItineraire);

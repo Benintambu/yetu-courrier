@@ -37,4 +37,27 @@ router.get("/colis/user/:uid", getColisByUser);
 router.put("/colis/:id", updateColis);
 router.delete("/colis/:id", deleteColis);
 
+// Nouvelle route pour forcer la déconnexion
+router.post('/force-logout/:uid', async (req, res) => {
+    try {
+        await admin.auth().revokeRefreshTokens(req.params.uid);
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Vérifie la validité de la session
+router.get('/check-session/:uid', async (req, res) => {
+    try {
+        const user = await admin.auth().getUser(req.params.uid);
+        res.status(200).json({
+            validAfter: user.tokensValidAfterTime,
+            lastLogin: user.metadata.lastSignInTime
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

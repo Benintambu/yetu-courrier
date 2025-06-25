@@ -7,7 +7,8 @@ const {
     createVille,
     getAllVilles,
     deleteVille,
-    searchVilles
+    searchVilles,
+    updateVille
 } = require("../controllers/ville.controller");
 
 /* router.get("/villes/search", async (req, res) => {
@@ -34,6 +35,7 @@ router.post("/villes", createVille);
 router.get("/villes/search", searchVilles);
 router.get("/villes", getAllVilles);
 router.delete("/villes/:id", deleteVille);
+router.put("/villes/:id", updateVille);
 
 
 module.exports = router;

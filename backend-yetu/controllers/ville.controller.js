@@ -68,3 +68,14 @@ exports.searchVilles = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.updateVille = async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+    try {
+        await admin.firestore().collection("villes").doc(id).update(updates);
+        res.status(200).json({ message: "Ville mise à jour" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

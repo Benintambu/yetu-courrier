@@ -1,8 +1,9 @@
 // AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, getIdTokenResult, signOut, setPersistence, browserSessionPersistence } from "firebase/auth";
-import { auth } from "../firebase";
-import axios from "axios";
+import { onAuthStateChanged, signOut, getIdTokenResult } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 const AuthContext = createContext();
 
@@ -16,26 +17,26 @@ export const AuthProvider = ({ children }) => {
     const logout = () => signOut(auth);
 
     useEffect(() => {
-        console.log("AuthStateChanged triggered for role:", role);
-        let isMounted = true;
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!isMounted) return;
-
             if (user) {
-                const token = await getIdTokenResult(user, true);
-                setRole(token.claims.role || null);
-                setCurrentUser(user);
+                try {
+                    const token = await getIdTokenResult(user, true);
+                    setRole(token.claims.role || null);
+                    setCurrentUser(user);
+                } catch (err) {
+                    console.error("Erreur lors de la récupération du token : ", err);
+                    setCurrentUser(null);
+                    setRole(null);
+                }
             } else {
                 setCurrentUser(null);
                 setRole(null);
             }
             setLoading(false);
         });
-        return () => {
-            isMounted = false;
-            unsubscribe();
-        };
+        return () => unsubscribe();
     }, []);
+
 
     return (
         <AuthContext.Provider value={{ currentUser, role, logout, loading }}>

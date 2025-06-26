@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext"; // Assure-toi que tu as un contexte Auth qui fournit currentUser
 
 export default function ExpeditionList() {
+    const { currentUser } = useAuth(); // on récupère l'utilisateur connecté
     const [expeditions, setExpeditions] = useState([]);
     const [chauffeurQueries, setChauffeurQueries] = useState({});
     const [chauffeurSuggestions, setChauffeurSuggestions] = useState({});
@@ -9,14 +11,22 @@ export default function ExpeditionList() {
     const [colisSuggestions, setColisSuggestions] = useState({});
 
     useEffect(() => {
-        fetchExpeditions();
-    }, []);
+        if (currentUser?.uid) {
+            fetchExpeditions();
+        }
+    }, [currentUser]);
 
     const fetchExpeditions = async () => {
-        const res = await axios.get("http://localhost:5000/api/expeditions");
-        setExpeditions(res.data);
+        try {
+            const res = await axios.get(`http://localhost:5000/api/expeditions/gerant/${currentUser.uid}`);
+            setExpeditions(res.data);
+        } catch (err) {
+            console.error("Erreur fetchExpeditions :", err);
+            alert("Impossible de charger les expéditions : " + (err.response?.data?.error || err.message));
+        }
     };
 
+    // ... Le reste de tes fonctions ne change pas
     const handleChangeStatut = async (expId, statut) => {
         await axios.put(`http://localhost:5000/api/expeditions/${expId}/statut`, { statut });
         fetchExpeditions();
@@ -81,6 +91,33 @@ export default function ExpeditionList() {
         await axios.delete(`http://localhost:5000/api/expeditions/${expId}`);
         fetchExpeditions();
     };
+
+    /* return (
+        <div style={{ padding: "2rem" }}>
+            <h2>📦 Liste des expéditions</h2>
+            {expeditions.map(exp => (
+                <div key={exp.id} style={{ border: "1px solid #ccc", padding: "1rem", marginBottom: "1rem" }}>
+                    <h3>{exp.itineraireNom}</h3>
+                    <p><strong>Départ :</strong> {exp.villeDepart?.nom}</p>
+                    <p><strong>Arrivée :</strong> {exp.villeArrivee?.nom}</p>
+                    <p><strong>Chauffeur :</strong> {exp.chauffeurUid}</p>
+                    <p><strong>Statut :</strong> {exp.statut}</p>
+
+                    <div>
+                        <label>Changer statut :</label>
+                        <select value={exp.statut} onChange={e => handleChangeStatut(exp.id, e.target.value)}>
+                            <option value="créée">Créée</option>
+                            <option value="en cours">En cours</option>
+                            <option value="terminée">Terminée</option>
+                        </select>
+                    </div>
+
+                    
+
+                </div>
+            ))}
+        </div>
+    ); */
 
     return (
         <div style={{ padding: "2rem" }}>

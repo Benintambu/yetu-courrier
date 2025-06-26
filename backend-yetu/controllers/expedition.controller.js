@@ -224,35 +224,42 @@ exports.updateChauffeur = async (req, res) => {
 };
 
 exports.getExpeditionsByGerant = async (req, res) => {
-    const { uid } = req.params;
-
     try {
+        const { uid } = req.params;
+
+        if (!uid) return res.status(400).json({ error: "UID requis" });
+
         const db = admin.firestore();
+
+        // Récupérer le gérant
         const userDoc = await db.collection("users").doc(uid).get();
         if (!userDoc.exists) {
-            return res.status(404).json({ error: "Utilisateur introuvable" });
+            return res.status(404).json({ error: "Gérant introuvable." });
         }
 
-        const user = userDoc.data();
-        if (user.role !== "gerant") {
-            return res.status(403).json({ error: "Accès réservé aux gérants" });
+        const userData = userDoc.data();
+        if (userData.role !== "gerant") {
+            return res.status(403).json({ error: "Accès réservé aux gérants." });
         }
 
-        const expedDepSnap = await db.collection("expeditions")
-            .where("villeDepart.nom", "==", user.ville.nom)
-            .get();
+        if (!userData.ville || !userData.ville.id) {
+            return res.status(400).json({ error: "Ce gérant n'a pas de ville affectée." });
+        }
 
-        const expedArrSnap = await db.collection("expeditions")
-            .where("villeArrivee.nom", "==", user.ville.nom)
-            .get();
+        const villeId = userData.ville.id;
 
-        const dep = expedDepSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const arr = expedArrSnap.docs
-            .filter(doc => !dep.some(d => d.id === doc.id))
-            .map(doc => ({ id: doc.id, ...doc.data() }));
+        // Récupérer les expéditions concernées
+        const snapshot = await db.collection("expeditions").get();
+        const expeditions = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(exp =>
+                exp.villeDepart?.id === villeId || exp.villeArrivee?.id === villeId
+            );
 
-        res.status(200).json([...dep, ...arr]);
+        res.status(200).json(expeditions);
+
     } catch (err) {
+        console.error("Erreur getExpeditionsForGerant :", err);
         res.status(500).json({ error: err.message });
     }
 };

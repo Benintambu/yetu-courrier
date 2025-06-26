@@ -1,18 +1,20 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
+// Remplace ces valeurs par les vraies de ton projet Firebase (console Firebase -> Project settings)
 const firebaseConfig = {
     apiKey: "AIzaSyBNGZ1bjokqjwObjZew9e9iNAWJfjTQK-U",
     authDomain: "yetu-courrier.firebaseapp.com",
     projectId: "yetu-courrier",
+    storageBucket: "yetu-courrier.firebasestorage.app",
+    messagingSenderId: "457866525101",
     appId: "1:457866525101:web:b3aa666ebea7f057aac924"
 };
 
-// Initialize Firebase
+// Initialise Firebase
 const app = initializeApp(firebaseConfig);
+
+// Exporter auth et db
 export const auth = getAuth(app);
+export const db = getFirestore(app);

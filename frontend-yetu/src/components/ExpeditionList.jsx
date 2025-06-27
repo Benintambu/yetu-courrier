@@ -9,6 +9,9 @@ export default function ExpeditionList() {
     const [chauffeurSuggestions, setChauffeurSuggestions] = useState({});
     const [colisQueries, setColisQueries] = useState({});
     const [colisSuggestions, setColisSuggestions] = useState({});
+    const [chauffeursMap, setChauffeursMap] = useState({});
+    const [isAddingColis, setIsAddingColis] = useState(false);
+
 
     useEffect(() => {
         if (currentUser?.uid) {
@@ -20,13 +23,26 @@ export default function ExpeditionList() {
         try {
             const res = await axios.get(`http://localhost:5000/api/expeditions/gerant/${currentUser.uid}`);
             setExpeditions(res.data);
+
+            // Extraire les uids des chauffeurs dans les expéditions
+            const uids = [...new Set(res.data.map(exp => exp.chauffeurUid).filter(Boolean))];
+
+            // Récupérer les chauffeurs correspondant
+            const usersRes = await axios.get("http://localhost:5000/api/users");
+            const map = {};
+            usersRes.data.forEach(user => {
+                if (uids.includes(user.uid)) {
+                    map[user.uid] = user;
+                }
+            });
+            setChauffeursMap(map);
         } catch (err) {
             console.error("Erreur fetchExpeditions :", err);
             alert("Impossible de charger les expéditions : " + (err.response?.data?.error || err.message));
         }
     };
 
-    // ... Le reste de tes fonctions ne change pas
+
     const handleChangeStatut = async (expId, statut) => {
         await axios.put(`http://localhost:5000/api/expeditions/${expId}/statut`, { statut });
         fetchExpeditions();
@@ -79,12 +95,20 @@ export default function ExpeditionList() {
 
     const handleAddColis = async (expId, colisId) => {
         try {
-            await axios.put(`http://localhost:5000/api/expeditions/${expId}/add-colis`, { colisId });
+            setIsAddingColis(true);
+            await axios.put(`http://localhost:5000/api/expeditions/${expId}/add-colis`, {
+                colisId,
+                userUid: currentUser.uid,
+            });
             fetchExpeditions();
         } catch (err) {
             alert(err.response?.data?.error || err.message);
+        } finally {
+            setIsAddingColis(false);
         }
     };
+
+
 
     const handleDeleteExpedition = async (expId) => {
         if (!window.confirm("Supprimer cette expédition ?")) return;
@@ -92,32 +116,6 @@ export default function ExpeditionList() {
         fetchExpeditions();
     };
 
-    /* return (
-        <div style={{ padding: "2rem" }}>
-            <h2>📦 Liste des expéditions</h2>
-            {expeditions.map(exp => (
-                <div key={exp.id} style={{ border: "1px solid #ccc", padding: "1rem", marginBottom: "1rem" }}>
-                    <h3>{exp.itineraireNom}</h3>
-                    <p><strong>Départ :</strong> {exp.villeDepart?.nom}</p>
-                    <p><strong>Arrivée :</strong> {exp.villeArrivee?.nom}</p>
-                    <p><strong>Chauffeur :</strong> {exp.chauffeurUid}</p>
-                    <p><strong>Statut :</strong> {exp.statut}</p>
-
-                    <div>
-                        <label>Changer statut :</label>
-                        <select value={exp.statut} onChange={e => handleChangeStatut(exp.id, e.target.value)}>
-                            <option value="créée">Créée</option>
-                            <option value="en cours">En cours</option>
-                            <option value="terminée">Terminée</option>
-                        </select>
-                    </div>
-
-                    
-
-                </div>
-            ))}
-        </div>
-    ); */
 
     return (
         <div style={{ padding: "2rem" }}>
@@ -127,7 +125,7 @@ export default function ExpeditionList() {
                     <h3>{exp.itineraireNom}</h3>
                     <p><strong>Départ :</strong> {exp.villeDepart?.nom}</p>
                     <p><strong>Arrivée :</strong> {exp.villeArrivee?.nom}</p>
-                    <p><strong>Chauffeur :</strong> {exp.chauffeurUid}</p>
+                    <p><strong>Chauffeur :</strong> {chauffeursMap[exp.chauffeurUid]?.displayName || exp.chauffeurUid}</p>
                     <p><strong>Statut :</strong> {exp.statut}</p>
 
                     <div>
@@ -179,7 +177,13 @@ export default function ExpeditionList() {
                             {(colisSuggestions[exp.id] || []).map(c => (
                                 <li key={c.id}>
                                     {c.nom}
-                                    <button onClick={() => handleAddColis(exp.id, c.id)}>Ajouter</button>
+                                    <button
+                                        disabled={isAddingColis}
+                                        onClick={() => handleAddColis(exp.id, c.id)}
+                                    >
+                                        Ajouter
+                                    </button>
+
                                 </li>
                             ))}
                         </ul>

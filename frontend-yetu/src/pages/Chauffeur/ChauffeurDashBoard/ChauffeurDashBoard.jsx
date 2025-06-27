@@ -1,5 +1,6 @@
 import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ChauffeurColisList from "../../../components/ChauffeurColisList";
 
 export default function ChauffeurDashBoard() {
 
@@ -15,6 +16,7 @@ export default function ChauffeurDashBoard() {
         <>
             <h1>Chauffeur ({currentUser.displayName})</h1>
             <button onClick={handleLogout}>Déconnexion</button>
+            <ChauffeurColisList />
         </>
     )
 }

@@ -7,21 +7,20 @@ export default function CreateExpedition() {
     const [chauffeurQuery, setChauffeurQuery] = useState("");
     const [chauffeurSuggestions, setChauffeurSuggestions] = useState([]);
     const [selectedChauffeur, setSelectedChauffeur] = useState(null);
-
     const [filteredItineraires, setFilteredItineraires] = useState([]);
     const [selectedItineraire, setSelectedItineraire] = useState(null);
     const [colisProposes, setColisProposes] = useState([]);
+    const [colisAffectes, setColisAffectes] = useState([]);
+    const [expCreatedId, setExpCreatedId] = useState(null);
     const [chauffeurMessage, setChauffeurMessage] = useState("");
     const [gerantVille, setGerantVille] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 🔥 Charge directement les itinéraires filtrés par le backend
                 const itinRes = await axios.get(`http://localhost:5000/api/itineraires/for-gerant/${currentUser.uid}`);
                 setFilteredItineraires(itinRes.data);
 
-                // 🔥 Charge les infos du gérant
                 const userRes = await axios.get(`http://localhost:5000/api/users/${currentUser.uid}`);
                 if (userRes.data.role !== "gerant") {
                     alert("⚠️ Seuls les gérants peuvent créer une expédition.");
@@ -32,7 +31,6 @@ export default function CreateExpedition() {
                 console.error("Erreur chargement données :", err);
             }
         };
-
         fetchData();
     }, [currentUser.uid]);
 
@@ -64,12 +62,9 @@ export default function CreateExpedition() {
                 exp.chauffeurUid === chauffeur.uid &&
                 (exp.statut === "en attente" || exp.statut === "en cours")
             );
-
-            if (expActives.length > 0) {
-                setChauffeurMessage(`⚠️ Ce chauffeur est déjà affecté à une expédition active : ${expActives[0].itineraireNom}`);
-            } else {
-                setChauffeurMessage("✅ Chauffeur disponible !");
-            }
+            setChauffeurMessage(expActives.length > 0
+                ? `⚠️ Chauffeur déjà affecté à : ${expActives[0].itineraireNom}`
+                : "✅ Chauffeur disponible !");
         } catch (err) {
             console.error("Erreur vérification dispo chauffeur:", err);
         }
@@ -78,8 +73,10 @@ export default function CreateExpedition() {
     const handleItineraireSelect = async (itinId) => {
         const itin = filteredItineraires.find(i => i.id === itinId);
         setSelectedItineraire(itin);
-        if (!itin?.villes?.length) return;
+        setColisAffectes([]);
+        setExpCreatedId(null);
 
+        if (!itin?.villes?.length) return;
         const villeDepart = itin.villes[0].nom;
         const destinations = itin.villes.slice(1).map(v => v.nom);
 
@@ -95,11 +92,14 @@ export default function CreateExpedition() {
         }
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // ⛔ annule le comportement de rechargement
+
         if (!selectedItineraire || !selectedChauffeur) {
             alert("Tous les champs sont obligatoires");
             return;
         }
+
         try {
             await axios.post("http://localhost:5000/api/expeditions", {
                 itineraireId: selectedItineraire.id,
@@ -116,13 +116,12 @@ export default function CreateExpedition() {
         }
     };
 
+
     return (
-        <div>
+        <div style={{ padding: "2rem" }}>
             <h2>Créer une expédition</h2>
 
-            {gerantVille && (
-                <p>🌍 Ville gérée : <strong>{gerantVille.nom}</strong></p>
-            )}
+            {gerantVille && <p>🌍 Ville gérée : <strong>{gerantVille.nom}</strong></p>}
 
             <input
                 placeholder="🔍 Rechercher un chauffeur"
@@ -157,16 +156,33 @@ export default function CreateExpedition() {
                 ))}
             </select>
 
-            <h4>Colis affectés :</h4>
-            <ul>
-                {colisProposes.map(c => (
-                    <li key={c.id}>
-                        {c.nom} → {c.villeArrivee?.nom}
-                    </li>
-                ))}
-            </ul>
+            {!expCreatedId ? (
+                <>
+                    <h4>Colis proposés pour cette expédition :</h4>
+                    <ul>
+                        {colisProposes.map(c => (
+                            <li key={c.id}>
+                                {c.nom} → {c.villeArrivee?.nom}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            ) : (
+                <>
+                    <h4>✅ Colis effectivement affectés :</h4>
+                    <ul>
+                        {colisAffectes.map(c => (
+                            <li key={c.id}>
+                                {c.nom} → {c.villeArrivee?.nom}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
 
-            <button onClick={handleSubmit}>Enregistrer l'expédition</button>
+            <button onClick={handleSubmit} disabled={!!expCreatedId}>
+                Enregistrer l'expédition
+            </button>
         </div>
     );
 }

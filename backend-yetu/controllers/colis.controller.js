@@ -19,7 +19,7 @@ exports.createColis = async (req, res) => {
     try {
         const db = require("../config/firebase").firestore();
 
-        await db.collection("colis").add({
+        const newColisRef = await db.collection("colis").add({
             nom, poids, dimensions, contenu, prix,
             codeSecret,
             villeDepart,
@@ -29,11 +29,43 @@ exports.createColis = async (req, res) => {
             createdAt: new Date()
         });
 
+        // 🔁 Chercher une expédition existante encore "créée"
+        const expSnapshot = await db.collection("expeditions")
+            .where("villeDepart.nom", "==", villeDepart.nom)
+            .where("statut", "==", "créée")
+            .get();
+
+        for (const doc of expSnapshot.docs) {
+            const exp = doc.data();
+
+            // Vérifier si la destination du colis est dans l’itinéraire
+            const itinDoc = await db.collection("itineraires").doc(exp.itineraireId).get();
+            const villes = itinDoc.data().villes.map(v => v.nom);
+
+            if (villes.includes(villeArrivee.nom)) {
+                const expRef = db.collection("expeditions").doc(doc.id);
+                const currentColis = exp.colis || [];
+
+                await expRef.update({
+                    colis: [...currentColis, {
+                        id: newColisRef.id,
+                        nom,
+                        villeDepart,
+                        villeArrivee
+                    }]
+                });
+
+                break; // ✅ Un seul ajout suffit
+            }
+        }
+
         res.status(201).json({ message: "Colis créé avec succès" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
+
 
 exports.getColisByUser = async (req, res) => {
     const { uid } = req.params;

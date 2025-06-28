@@ -1,2 +1,5 @@
 # Firebase admin private key
 backend-yetu/serviceAccountKey.json 
+
+# Twilio Credentials
+backend-yetu/.env

@@ -15,7 +15,8 @@
     "express": "^5.1.0",
     "firebase-admin": "^13.4.0",
     "nodemailer": "^7.0.3",
-    "serve-favicon": "^2.5.1"
+    "serve-favicon": "^2.5.1",
+    "twilio": "^5.7.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

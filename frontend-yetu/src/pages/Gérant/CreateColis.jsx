@@ -139,18 +139,14 @@ export default function CreateColis() {
                 longueur: form.longueur,
                 largeur: form.largeur
             },
-            client: {
-                uid: clientData.uid,
-                displayName: clientData.displayName,
-                email: clientData.email,
-                phone: clientData.phone
-            },
             destinataire: form.destinataire,
             villeDepart,
             villeArrivee,
             codeSecret: generateSecretCode(),
-            createdBy: currentUser.uid
+            createdBy: currentUser.uid,
+            expediteurUid: form.client.uid
         };
+
 
         try {
             await axios.post("http://localhost:5000/api/colis", payload);

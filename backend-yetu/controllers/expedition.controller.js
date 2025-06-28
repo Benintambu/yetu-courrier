@@ -1,5 +1,6 @@
 // 📁 controllers/expedition.controller.js
 const admin = require("../config/firebase");
+const { sendEmail, sendSMS } = require('../services/notification.service')
 
 exports.createExpedition = async (req, res) => {
     try {
@@ -167,7 +168,7 @@ exports.addColisToExpedition = async (req, res) => {
 
 
 
-exports.updateStatut = async (req, res) => {
+/* exports.updateStatut = async (req, res) => {
     const { expId } = req.params;
     const { statut } = req.body;
 
@@ -177,6 +178,62 @@ exports.updateStatut = async (req, res) => {
 
     try {
         await admin.firestore().collection("expeditions").doc(expId).update({ statut });
+        res.status(200).json({ message: "Statut mis à jour avec succès." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}; */
+
+
+
+exports.updateStatut = async (req, res) => {
+    const { expId } = req.params;
+    const { statut } = req.body;
+
+    if (!["créée", "en cours", "terminée"].includes(statut)) {
+        return res.status(400).json({ error: "Statut invalide" });
+    }
+
+    try {
+        const db = admin.firestore();
+        const docRef = db.collection("expeditions").doc(expId);
+        const expDoc = await docRef.get();
+
+        if (!expDoc.exists) return res.status(404).json({ error: "Expédition introuvable" });
+
+        const expedition = expDoc.data();
+        await docRef.update({ statut });
+
+        const message = {
+            "créée": "Votre colis est prêt à être expédié.",
+            "en cours": "Votre colis est en cours de livraison.",
+            "terminée": "Votre colis est arrivé à destination."
+        };
+
+        const uids = new Set();
+        for (const colis of expedition.colis || []) {
+            if (colis?.createdBy?.uid) uids.add(colis.createdBy.uid);
+            if (colis?.destinataire?.uid) uids.add(colis.destinataire.uid);
+        }
+
+        const userDocs = await Promise.all(
+            [...uids].map(uid => db.collection("users").doc(uid).get())
+        );
+
+        for (const doc of userDocs) {
+            if (!doc.exists) continue;
+            const user = doc.data();
+            if (user.email) {
+                await sendEmail(user.email, "📦 Suivi de votre colis", `
+                    <p>Bonjour ${user.displayName},</p>
+                    <p>${message[statut]}</p>
+                `);
+            }
+            if (user.phone) {
+                await sendSMS(user.phone, `Yetu Express : ${message[statut]}`);
+            }
+        }
+
         res.status(200).json({ message: "Statut mis à jour avec succès." });
     } catch (err) {
         res.status(500).json({ error: err.message });

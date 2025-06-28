@@ -29,6 +29,12 @@
     margin-bottom: 15px;
 }
 
+.container-right-text h2 {
+    font-family: var(--main-font);
+    font-size: clamp(21px, 2vw, 29px);
+    margin-bottom: 10px;
+}
+
 .container-right form {
     display: grid;
     gap: .5em;

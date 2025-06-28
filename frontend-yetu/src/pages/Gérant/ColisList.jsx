@@ -215,7 +215,7 @@ export default function ColisList() {
                                 <p><strong>Prix :</strong> {c.prix} USD</p>
                                 <p><strong>Départ :</strong> {c.villeDepart?.nom} ({c.villeDepart?.zone})</p>
                                 <p><strong>Arrivée :</strong> {c.villeArrivee?.nom} ({c.villeArrivee?.zone})</p>
-                                <p><strong>Client :</strong> {c.client?.displayName} – {c.client?.email} – {c.client?.phone}</p>
+                                <p><strong>Client :</strong> {c.expediteur?.displayName} – {c.expediteur?.email} – {c.expediteur?.phone}</p>
                                 <p><strong>Destinataire :</strong> {c.destinataire?.nom} – {c.destinataire?.email}</p>
                                 <button onClick={() => {
                                     setEditingId(c.id);

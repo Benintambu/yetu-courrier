@@ -159,12 +159,31 @@ exports.deleteColis = async (req, res) => {
 
     try {
         const db = admin.firestore();
+
+        // 🔍 Supprimer le colis de toutes les expéditions qui le contiennent
+        const expSnapshot = await db.collection("expeditions").get();
+
+        for (const doc of expSnapshot.docs) {
+            const exp = doc.data();
+            const colis = exp.colis || [];
+
+            const found = colis.find(c => c.id === id);
+            if (found) {
+                const updatedColis = colis.filter(c => c.id !== id);
+                await db.collection("expeditions").doc(doc.id).update({ colis: updatedColis });
+            }
+        }
+
+        // 🔥 Supprimer le colis lui-même
         await db.collection("colis").doc(id).delete();
-        res.status(200).json({ message: "Colis supprimé avec succès" });
+
+        res.status(200).json({ message: "Colis supprimé et retiré des expéditions." });
     } catch (err) {
+        console.error("Erreur deleteColis :", err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // 📌 Ajouter cette fonction dans ton controller colis.controller.js
 exports.getAllColis = async (req, res) => {
